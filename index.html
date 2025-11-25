@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>PhotoCompress — Modern 3D Single-file (with Camera)</title>
-
 <meta name="description" content="Kompres gambar di browser — modern UI dengan efek 3D, tanpa upload." />
 <style>
 :root{
@@ -78,10 +77,7 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
           <div class="hint">atau <label for="fileInput" class="link">pilih file</label> • Maks 20 file</div>
         </div>
 
-        <!-- normal file input -->
         <input id="fileInput" type="file" accept="image/*" multiple hidden>
-
-        <!-- camera-specific input (uses capture on mobile) -->
         <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
 
         <div class="controls">
@@ -125,7 +121,6 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
 
 <div class="floating-info" id="float">Ready</div>
 
-<!-- JSZip CDN -->
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.0/dist/jszip.min.js"></script>
 
 <script>
@@ -160,39 +155,20 @@ fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
 /* Camera: first try native capture input, fallback to getUserMedia */
 cameraBtn.addEventListener('click', async ()=>{
-  // Try to open file input with capture attribute (works on many Android)
   try {
     cameraInput.click();
-    // If user denies or browser doesn't support, fallback will be handled on change timeout
-    // We'll set a small timer to detect no change and then offer live camera
     const changed = await waitForInputChange(cameraInput, 1500);
-    if (!changed) {
-      // fallback to live camera
-      openLiveCameraModal();
-    }
-  } catch(e) {
-    openLiveCameraModal();
-  }
+    if (!changed) openLiveCameraModal();
+  } catch(e) { openLiveCameraModal(); }
 });
+cameraInput.addEventListener('change', (e)=> { if(e.target.files && e.target.files.length) handleFiles(e.target.files); });
 
-cameraInput.addEventListener('change', (e)=>{
-  if(e.target.files && e.target.files.length) {
-    handleFiles(e.target.files);
-  }
-});
-
-/* handle files */
 function handleFiles(list){
   const arr = Array.from(list).filter(f=> f.type && f.type.startsWith('image/')).slice(0, 20 - files.length);
   if(arr.length === 0) return;
-  for(const f of arr){
-    files.push(f);
-    renderThumb(f);
-  }
+  for(const f of arr){ files.push(f); renderThumb(f); }
   setStatus(files.length + ' file ready');
 }
-
-/* render preview */
 function renderThumb(file){
   const div = document.createElement('div'); div.className = 'thumb';
   const img = document.createElement('img'); img.alt = file.name;
@@ -202,23 +178,14 @@ function renderThumb(file){
   meta.appendChild(left); meta.appendChild(right);
   div.appendChild(img); div.appendChild(meta);
   gallery.prepend(div);
-
   const reader = new FileReader();
   reader.onload = ()=> img.src = reader.result;
   reader.readAsDataURL(file);
-
-  img.addEventListener('click', ()=> {
-    const a = document.createElement('a'); a.href = img.src; a.download = file.name; a.click();
-  });
+  img.addEventListener('click', ()=> { const a = document.createElement('a'); a.href = img.src; a.download = file.name; a.click(); });
 }
+clearBtn.addEventListener('click', ()=> { files = []; compressedFiles = []; gallery.innerHTML=''; downloadZipBtn.disabled=true; setStatus('cleared'); });
 
-/* clear */
-clearBtn.addEventListener('click', ()=>{
-  files = []; compressedFiles = []; gallery.innerHTML=''; downloadZipBtn.disabled=true; setStatus('cleared');
-});
-
-/* compress flow */
-compressBtn.addEventListener('click', async ()=>{
+compressBtn.addEventListener('click', async ()=> {
   if(files.length === 0){ alert('Pilih file terlebih dahulu.'); return; }
   compressBtn.disabled = true; setStatus('Compressing...');
   compressedFiles = [];
@@ -226,15 +193,11 @@ compressBtn.addEventListener('click', async ()=>{
     for(let i=0;i<files.length;i++){
       const f = files[i];
       setStatus(`Compressing ${i+1}/${files.length}`);
-      const blob = await compressImageFile(f, {
-        quality: Number(qualityInput.value)/100,
-        maxWidth: Number(maxWidthInput.value)
-      });
+      const blob = await compressImageFile(f, { quality: Number(qualityInput.value)/100, maxWidth: Number(maxWidthInput.value) });
       const ext = supportsWebP()?'.webp':'.jpg';
       const base = f.name.replace(/\.[^/.]+$/, "");
       const name = base + ext;
       compressedFiles.push({name, blob});
-      // add compressed preview
       const tb = document.createElement('div'); tb.className='thumb';
       const im = document.createElement('img'); im.src = URL.createObjectURL(blob);
       const m = document.createElement('div'); m.className='meta'; m.textContent = name + ' • ' + Math.round(blob.size/1024) + ' KB';
@@ -244,13 +207,9 @@ compressBtn.addEventListener('click', async ()=>{
     }
     setStatus(`Selesai — ${compressedFiles.length} file`);
     downloadZipBtn.disabled = false;
-  }catch(err){
-    console.error(err); alert('Terjadi error saat kompresi.'); setStatus('error');
-  }finally{ compressBtn.disabled = false; }
+  }catch(err){ console.error(err); alert('Terjadi error saat kompresi.'); setStatus('error'); }finally{ compressBtn.disabled = false; }
 });
-
-/* download zip */
-downloadZipBtn.addEventListener('click', async ()=>{
+downloadZipBtn.addEventListener('click', async ()=> {
   if(!compressedFiles.length) return;
   setStatus('Membuat ZIP...');
   const zip = new JSZip();
@@ -261,8 +220,6 @@ downloadZipBtn.addEventListener('click', async ()=>{
   URL.revokeObjectURL(url);
   setStatus('ZIP siap — terunduh');
 });
-
-/* compress helper */
 async function compressImageFile(file, opts){
   const img = await loadImageFromFile(file);
   const {width, height} = calcSize(img.width, img.height, opts.maxWidth);
@@ -272,98 +229,14 @@ async function compressImageFile(file, opts){
   const mime = supportsWebP()? 'image/webp' : 'image/jpeg';
   return await new Promise((res)=> canvas.toBlob(res, mime, opts.quality));
 }
-
-function supportsWebP(){
-  try{ const c = document.createElement('canvas'); return c.toDataURL('image/webp').indexOf('data:image/webp') === 0; }catch(e){ return false; }
-}
+function supportsWebP(){ try{ const c = document.createElement('canvas'); return c.toDataURL('image/webp').indexOf('data:image/webp') === 0; }catch(e){ return false; } }
 function loadImageFromFile(file){ return new Promise((res, rej)=>{ const reader = new FileReader(); reader.onload = ()=>{ const img = new Image(); img.onload = ()=> res(img); img.onerror = rej; img.src = reader.result; }; reader.onerror = rej; reader.readAsDataURL(file); }); }
 function calcSize(w,h,maxW){ if(!maxW || w <= maxW) return {width:w, height:h}; const ratio = maxW / w; return {width: Math.round(w*ratio), height: Math.round(h*ratio)}; }
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-/* wait for input change helper */
-function waitForInputChange(inp, timeout=1200){
-  return new Promise(resolve=>{
-    let done=false;
-    const onChange = ()=>{ if(done) return; done=true; cleanup(); resolve(true); };
-    const cleanup = ()=>{ inp.removeEventListener('change', onChange); clearTimeout(t); };
-    inp.addEventListener('change', onChange);
-    const t = setTimeout(()=>{ if(done) return; done=true; cleanup(); resolve(false); }, timeout);
-  });
-}
-
-/* Live camera modal fallback using getUserMedia */
-function openLiveCameraModal(){
-  // build overlay
-  const overlay = document.createElement('div'); overlay.className='overlay';
-  const modal = document.createElement('div'); modal.className='cam-modal';
-  const videoWrap = document.createElement('div'); videoWrap.className='cam-video';
-  const video = document.createElement('video'); video.autoplay = true; video.playsInline = true;
-  videoWrap.appendChild(video);
-  const controls = document.createElement('div'); controls.className='cam-controls';
-  const capBtn = document.createElement('button'); capBtn.className='btn primary'; capBtn.textContent='Capture';
-  const cancelBtn = document.createElement('button'); cancelBtn.className='btn'; cancelBtn.textContent='Cancel';
-  controls.appendChild(capBtn); controls.appendChild(cancelBtn);
-  modal.appendChild(videoWrap); modal.appendChild(controls); overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-
-  let stream;
-  async function start(){
-    try{
-      stream = await navigator.mediaDevices.getUserMedia({video: { facingMode: 'environment' }, audio:false});
-      video.srcObject = stream;
-    }catch(err){
-      alert('Tidak dapat mengakses kamera: ' + (err.message || err));
-      cleanup();
-    }
-  }
-  function cleanup(){
-    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
-    overlay.remove();
-  }
-  cancelBtn.addEventListener('click', ()=> cleanup());
-  capBtn.addEventListener('click', async ()=>{
-    // capture current frame to canvas
-    const canvas = document.createElement('canvas'); canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720;
-    const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob(async (blob)=>{
-      if(!blob) { alert('Gagal capture'); return; }
-      // create File from blob and handle as file
-      const file = new File([blob], 'camera_' + Date.now() + '.jpg', {type: blob.type});
-      handleFiles([file]);
-      cleanup();
-    }, 'image/jpeg', 0.92);
-  });
-
-  start();
-}
-
-/* small tilt effect */
-(function enableTilt(){
-  const panel = document.getElementById('panel');
-  if (window.DeviceOrientationEvent) {
-    function onOri(e){
-      const gamma = e.gamma || 0; const beta = e.beta || 0;
-      const rx = Math.max(-8, Math.min(8, (beta - 10) / 4));
-      const ry = Math.max(-10, Math.min(10, (gamma) / 4));
-      panel.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
-    }
-    const attach = ()=> {
-      try{
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission().then(p=>{
-            if(p==='granted'){ window.addEventListener('deviceorientation', onOri); }
-          }).catch(()=>{});
-        } else { window.addEventListener('deviceorientation', onOri); }
-      }catch(e){}
-      window.removeEventListener('touchstart', attach);
-    };
-    window.addEventListener('touchstart', attach, {once:true});
-  }
-})();
-
-/* keyboard shortcuts */
+function waitForInputChange(inp, timeout=1200){ return new Promise(resolve=>{ let done=false; const onChange = ()=>{ if(done) return; done=true; cleanup(); resolve(true); }; const cleanup = ()=>{ inp.removeEventListener('change', onChange); clearTimeout(t); }; inp.addEventListener('change', onChange); const t = setTimeout(()=>{ if(done) return; done=true; cleanup(); resolve(false); }, timeout); }); }
+function openLiveCameraModal(){ const overlay = document.createElement('div'); overlay.className='overlay'; const modal = document.createElement('div'); modal.className='cam-modal'; const videoWrap = document.createElement('div'); videoWrap.className='cam-video'; const video = document.createElement('video'); video.autoplay = true; video.playsInline = true; videoWrap.appendChild(video); const controls = document.createElement('div'); controls.className='cam-controls'; const capBtn = document.createElement('button'); capBtn.className='btn primary'; capBtn.textContent='Capture'; const cancelBtn = document.createElement('button'); cancelBtn.className='btn'; cancelBtn.textContent='Cancel'; controls.appendChild(capBtn); controls.appendChild(cancelBtn); modal.appendChild(videoWrap); modal.appendChild(controls); overlay.appendChild(modal); document.body.appendChild(overlay); let stream; async function start(){ try{ stream = await navigator.mediaDevices.getUserMedia({video: { facingMode: 'environment' }, audio:false}); video.srcObject = stream; }catch(err){ alert('Tidak dapat mengakses kamera: ' + (err.message || err)); cleanup(); } } function cleanup(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; } overlay.remove(); } cancelBtn.addEventListener('click', ()=> cleanup()); capBtn.addEventListener('click', async ()=>{ const canvas = document.createElement('canvas'); canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720; const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height); canvas.toBlob(async (blob)=>{ if(!blob) { alert('Gagal capture'); return; } const file = new File([blob], 'camera_' + Date.now() + '.jpg', {type: blob.type}); handleFiles([file]); cleanup(); }, 'image/jpeg', 0.92); }); start(); }
+(function enableTilt(){ const panel = document.getElementById('panel'); if (window.DeviceOrientationEvent) { function onOri(e){ const gamma = e.gamma || 0; const beta = e.beta || 0; const rx = Math.max(-8, Math.min(8, (beta - 10) / 4)); const ry = Math.max(-10, Math.min(10, (gamma) / 4)); panel.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`; } const attach = ()=> { try{ if (typeof DeviceOrientationEvent.requestPermission === 'function') { DeviceOrientationEvent.requestPermission().then(p=>{ if(p==='granted'){ window.addEventListener('deviceorientation', onOri); } }).catch(()=>{}); } else { window.addEventListener('deviceorientation', onOri); } }catch(e){} window.removeEventListener('touchstart', attach); }; window.addEventListener('touchstart', attach, {once:true}); } })();
 window.addEventListener('keydown', (e)=>{ if(e.key==='c'||e.key==='C') clearBtn.click(); if(e.key==='k'||e.key==='K') compressBtn.click(); });
-
 setStatus('Ready');
 window.__pc = { files, compressedFiles };
 </script>
