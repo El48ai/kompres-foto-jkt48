@@ -1,15 +1,99 @@
-:root{--bg:#f7fbff;--card:#ffffff;--accent:#0b84ff;--muted:#555}
+/* styles.css - modern responsive mobile-first */
+:root{
+  --bg: #f4f8ff;
+  --card: #ffffff;
+  --accent: #0b84ff;
+  --muted: #6b7280;
+  --text: #0f172a;
+  --radius: 12px;
+  --gap: 12px;
+  --max-width: 980px;
+}
+
 *{box-sizing:border-box}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#122}
-.top{padding:16px;text-align:center}
-.card{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(15,25,40,.06);margin:12px}
-#dropzone{border:2px dashed #cfe8ff;padding:28px;border-radius:8px;text-align:center;cursor:pointer}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.35;
+}
+
+/* app container */
+.app{max-width:var(--max-width);margin:0 auto;padding:18px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:center;padding:6px 0 10px}
+.brand h1{margin:0;font-size:28px;letter-spacing:-0.01em}
+.brand .tag{margin:6px 0 0;color:var(--muted);font-size:14px}
+
+/* card */
+.card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 8px 26px rgba(12,24,48,0.06);margin-bottom:var(--gap)}
+
+/* dropzone */
+.dropzone{
+  border-radius:10px;
+  border:2px dashed rgba(11,132,255,0.18);
+  background:linear-gradient(180deg, rgba(11,132,255,0.02), transparent);
+  padding:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  cursor:pointer;
+  transition:box-shadow .18s, transform .08s;
+}
+.dropzone:focus{outline:none;box-shadow:0 6px 18px rgba(11,132,255,0.12)}
+.dropzone.drag{border-color:var(--accent);transform:translateY(-2px)}
+.dz-inner{display:flex;flex-direction:column;align-items:center;gap:8px}
+.dz-icon{color:var(--accent);opacity:0.98}
+.dz-text{font-weight:600}
+.dz-hint{font-size:12px;color:var(--muted)}
+
+/* link inside dropzone */
 .link{color:var(--accent);text-decoration:underline;cursor:pointer}
-.controls{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
-#gallery{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
-.thumb{width:180px;border-radius:8px;overflow:hidden;background:#fafafa;border:1px solid #eee}
-.thumb img{display:block;width:100%;height:120px;object-fit:cover}
-.meta{padding:8px;font-size:13px}
-button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-@media(max-width:600px){.thumb{width:48%}}
+
+/* controls */
+.controls{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.control-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.label{min-width:100px;color:var(--muted);font-size:13px}
+#quality{flex:1}
+#maxWidth{width:120px;padding:6px;border-radius:8px;border:1px solid #e6eefc}
+
+/* buttons */
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;border:1px solid rgba(12,24,48,0.06);background:#fff;color:var(--text);cursor:pointer;font-weight:600;box-shadow:0 2px 6px rgba(12,24,48,0.04)}
+.btn.primary{background:var(--accent);color:#fff;border:none;box-shadow:0 8px 22px rgba(11,132,255,0.12)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;box-shadow:none}
+
+/* gallery */
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.thumb{background:#fff;border-radius:10px;overflow:hidden;border:1px solid #f0f4ff;display:flex;flex-direction:column}
+.thumb img{width:100%;height:140px;object-fit:cover}
+.meta{padding:8px;font-size:13px;color:var(--muted)}
+
+/* footer */
+.footer{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+
+/* responsive */
+@media (max-width:900px){
+  .gallery{grid-template-columns:repeat(2,1fr)}
+  .brand h1{font-size:24px}
+}
+@media (max-width:520px){
+  .app{padding:12px}
+  .brand h1{font-size:20px}
+  .dz-text{font-size:15px}
+  .dz-icon{width:40px;height:40px}
+  .gallery{grid-template-columns:repeat(2,1fr)}
+  .thumb img{height:120px}
+  .label{min-width:90px;font-size:13px}
+  #maxWidth{width:100px}
+}
+@media (max-width:360px){
+  .gallery{grid-template-columns:1fr}
+  .thumb img{height:160px}
+}
