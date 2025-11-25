@@ -2,39 +2,75 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>PhotoCompress — Kompres Gambar di Browser</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/styles.css">
   <meta name="theme-color" content="#0b84ff">
 </head>
 <body>
-  <header class="top">
-    <h1>PhotoCompress</h1>
-    <p class="tag">Kompres gambar langsung di browser — cepat, privat, tanpa upload.</p>
-  </header>
-
-  <main>
-    <section id="uploader" class="card" aria-label="Uploader">
-      <div id="dropzone" tabindex="0">Seret & jatuhkan gambar di sini atau <label for="fileInput" class="link">pilih file</label></div>
-      <input id="fileInput" type="file" accept="image/*" multiple hidden>
-      <div class="controls">
-        <label>Quality: <input id="quality" type="range" min="10" max="95" value="80"></label>
-        <label>Max width: <input id="maxWidth" type="number" min="64" max="6000" value="2048"></label>
-        <button id="compressBtn">Kompres</button>
-        <button id="downloadZipBtn" disabled>Download ZIP</button>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <h1>PhotoCompress</h1>
+        <p class="tag">Kompres gambar di browser — cepat, privat, tanpa upload.</p>
       </div>
-    </section>
+    </header>
 
-    <section id="gallery" aria-live="polite"></section>
-  </main>
+    <main class="main">
+      <section id="uploader" class="card" aria-label="Uploader">
+        <div id="dropzone" tabindex="0" class="dropzone">
+          <div class="dz-inner">
+            <svg class="dz-icon" viewBox="0 0 24 24" width="48" height="48" aria-hidden>
+              <path fill="currentColor" d="M19 15v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4"/>
+              <polyline fill="none" stroke="currentColor" stroke-width="1.6" points="7 10 12 5 17 10"/>
+              <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="1.6" fill="none"/>
+            </svg>
+            <div class="dz-text">
+              Seret & jatuhkan gambar di sini<br>
+              atau <label for="fileInput" class="link">pilih file</label>
+            </div>
+            <div class="dz-hint">Maks 20 file sekaligus • PNG / JPG / HEIC</div>
+          </div>
+        </div>
 
-  <footer>
-    <small>© PhotoCompress — bekerja sepenuhnya di browser. Lihat <a href="/privacy.html">Kebijakan Privasi</a>.</small>
-  </footer>
+        <input id="fileInput" type="file" accept="image/*" multiple hidden>
+
+        <div class="controls">
+          <div class="control-row">
+            <label class="label">Quality</label>
+            <input id="quality" type="range" min="10" max="95" value="80">
+            <span id="qualityVal" class="small">80</span>
+          </div>
+
+          <div class="control-row">
+            <label class="label">Max width (px)</label>
+            <input id="maxWidth" type="number" min="64" max="6000" value="2048">
+          </div>
+
+          <div class="btn-row">
+            <button id="compressBtn" class="btn primary">Kompres</button>
+            <button id="downloadZipBtn" class="btn" disabled>Download ZIP</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="gallery" class="gallery" aria-live="polite"></section>
+    </main>
+
+    <footer class="footer">
+      <small>© PhotoCompress — bekerja sepenuhnya di browser. Lihat <a href="/privacy.html">Kebijakan Privasi</a>.</small>
+    </footer>
+  </div>
 
   <script type="module" src="/app.js"></script>
   <script>
+    // tampilkan nilai quality realtime
+    const q = document.getElementById('quality');
+    const qv = document.getElementById('qualityVal');
+    if (q && qv) {
+      q.addEventListener('input', ()=> qv.textContent = q.value);
+    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
     }
